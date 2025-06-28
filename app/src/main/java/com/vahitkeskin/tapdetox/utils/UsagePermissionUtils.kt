@@ -19,12 +19,6 @@ fun isUsageAccessGranted(context: Context): Boolean {
     return mode == AppOpsManager.MODE_ALLOWED
 }
 
-fun requestUsageAccessPermission(context: Context) {
-    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    context.startActivity(intent)
-}
-
 fun getAllUsedAppsSinceMidnight(context: Context): List<AppInfoWithUsage> {
     val usageStatsManager =
         context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager

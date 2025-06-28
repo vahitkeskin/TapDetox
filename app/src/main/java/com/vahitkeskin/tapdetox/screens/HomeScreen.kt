@@ -1,6 +1,8 @@
 package com.vahitkeskin.tapdetox.screens
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
+import android.provider.Settings
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -8,6 +10,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,8 +26,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,20 +60,18 @@ import com.vahitkeskin.tapdetox.utils.TapDetoxPreview
 import com.vahitkeskin.tapdetox.utils.formatMillisToHms
 import com.vahitkeskin.tapdetox.utils.getAllUsedAppsSinceMidnight
 import com.vahitkeskin.tapdetox.utils.isUsageAccessGranted
-import android.content.Intent
-import android.provider.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
     var appList by remember { mutableStateOf<List<AppInfoWithUsage>>(emptyList()) }
-    var hasPermission by remember { mutableStateOf(false) }
+    var hasPermission by remember { mutableStateOf<Boolean?>(null) }
 
     LaunchedEffect(Unit) {
+        delay(100)
         hasPermission = isUsageAccessGranted(context)
-        if (hasPermission) {
+        if (hasPermission == true) {
             appList = getAllUsedAppsSinceMidnight(context)
         }
     }
@@ -77,14 +80,21 @@ fun HomeScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundDark)
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (hasPermission) {
-            UsageProgressDonutChart(apps = appList)
+        when (hasPermission) {
+            true -> {
+                UsageProgressDonutChart(apps = appList)
+            }
+            false -> {
+                PermissionRequestSection()
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-        } else {
-            PermissionRequestSection()
+            else -> {
+                CircularProgressIndicator()
+            }
         }
     }
 }
@@ -110,21 +120,6 @@ fun PermissionRequestSection() {
 fun UsageProgressDonutChart(
     apps: List<AppInfoWithUsage> = emptyList()
 ) {
-    val context = LocalContext.current
-    val now = System.currentTimeMillis()
-    val calendar = java.util.Calendar.getInstance().apply {
-        timeInMillis = now
-        set(java.util.Calendar.HOUR_OF_DAY, 0)
-        set(java.util.Calendar.MINUTE, 0)
-        set(java.util.Calendar.SECOND, 0)
-        set(java.util.Calendar.MILLISECOND, 0)
-    }
-    val midnight = calendar.timeInMillis
-
-    val elapsedTime = (now - midnight).toFloat() // ms olarak
-    val totalUsage = apps.sumOf { it.usageMillis }.toFloat()
-
-    val usagePercent = (totalUsage / elapsedTime).coerceIn(0f, 1f)
 
     Column(
         modifier = Modifier.fillMaxWidth()
